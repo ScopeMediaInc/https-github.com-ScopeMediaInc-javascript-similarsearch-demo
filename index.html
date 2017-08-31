@@ -93,7 +93,7 @@
 
 
       // Below clientId and clientSecret is for demo purpose
-      // The demo application's image set has 200 fashion images
+      // The demo image set has 200 fashion images
       // To use your image set, replace clientId and clientSecret with your client ID and secret from dashboard
       const clientId = 'ukKxYOZL94oDmIiPOO5GfREQHLglY25gkttmhFurUmmHSNSW1srrIY0ErT6lB3Eo',
             clientSecret = 'eWq0bU8j80R5b96YZmqfWNIYVugMj89m4P79qSKl4FyYiLMBQ23TuHf56gF9RrWh',
@@ -107,7 +107,7 @@
       function getImageSet() {
         if(loading) {return;}
         loading = true;
-        
+
         similarSearch.getAllImage(pagination)
         .then((response) => {
           loading = false;
@@ -137,6 +137,7 @@
       function searchImage(payload) {
         if(loading) {return;}
         loading = true;
+
         similarSearch.searchImage(payload)
         .then((response) => {
           loading = false;
