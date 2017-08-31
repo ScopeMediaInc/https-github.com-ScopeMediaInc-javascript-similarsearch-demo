@@ -1,0 +1,213 @@
+<html>
+  <head>
+    <title>ScopeMedia JavaScript Demo - Similar Image Search</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,minimum-scale=1,maximum-scale=1,user-scalable=no">
+    <script type="text/javascript" src="https://developer.scopemedia.com/js/scopemedia.min.js"></script>
+    <style>
+      body {
+        font-family: Karla, sans-serif;
+        margin: 4rem auto;
+        text-align: center;
+        max-width: 60rem;
+      }
+      img.thumb {
+        max-width: 8rem;
+        max-height: 8rem;
+        transition: all 0.4s;
+      }
+      img.link:hover {
+        transform: scale(1.2);
+        cursor: pointer;
+      }
+      #file-field {
+        display: none;
+      }
+      #url-field {
+        font-size: 20px;
+        padding: 6px 12px;
+        margin: 0.5rem;
+      }
+      .button {
+        display: inline-block;
+        text-align: center;
+        background: #fff;
+        border-radius: 25px;
+        border: 2px solid #29b2a3;
+        padding: 6px 12px;
+        font-size: 20px;
+        color: #29b2a3;
+        cursor: pointer;
+        margin: 0.5rem;
+      }
+      .button:hover {
+        background: #29b2a3;
+        color: #fff;
+      }
+      hr {
+        margin: 4rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <img src="./scopemedia_logo.png">
+    </div>
+
+    <h1>Similar Image Search</h1>
+
+    <div>
+      <input type="url" id="url-field"><button class="button" onclick="searchByUrl()">by URL</button>
+    </div>
+
+    <h3>or</h3>
+
+    <div>
+      <input type="file" id="file-field" onchange="searchByBase64(this)" accept="image/*"><label class="button" for="file-field">by encoding image to base64</label>
+    </div>
+
+    <h3>or</h3>
+
+    <div>
+      <h3>by image's mediaId from your image set (click an image from below)</h2>
+      <div id="all-images"></div>
+      <button class="button" id="load-more-button" onclick="getMoreImages()">Load More</button>
+    </div>
+
+    <hr>
+
+    <div>
+      <h2>Input image:</h2>
+      <img id="input-image" class="thumb">
+    </div>
+
+    <div>
+      <h2>Similar search result:</h2>
+      <div id="similar-images"></div>
+    </div>
+
+    <script>
+      let similarImagesContainer = document.getElementById('similar-images'),
+          allImagesContainer = document.getElementById('all-images'),
+          inputImage = document.getElementById('input-image')
+          urlField = document.getElementById('url-field');
+
+
+      // Below clientId and clientSecret is for demo purpose
+      // The demo application's image set has 200 fashion images
+      // To use your image set, replace clientId and clientSecret with your client ID and secret from dashboard
+      const clientId = 'ukKxYOZL94oDmIiPOO5GfREQHLglY25gkttmhFurUmmHSNSW1srrIY0ErT6lB3Eo',
+            clientSecret = 'eWq0bU8j80R5b96YZmqfWNIYVugMj89m4P79qSKl4FyYiLMBQ23TuHf56gF9RrWh',
+            similarSearch = new scopemedia.image.SimilarSearch(clientId, clientSecret);
+
+      var pagination = {page: 0, size: 20},
+          loading = false;
+
+      getImageSet();
+
+      function getImageSet() {
+        if(loading) {return;}
+        loading = true;
+        
+        similarSearch.getAllImage(pagination)
+        .then((response) => {
+          loading = false;
+          console.log('getAllImage', response);
+
+          if(response.medias.length === 0) {
+            alert('No images to load');
+            return;
+          }
+
+          pagination.page++;
+          for(var media of response.medias) {
+            ((media) => {
+              var img = document.createElement('img');
+              img.addEventListener('click', function () {
+                searchById(media);
+              });
+              img.classList.add('link','thumb');
+              img.src = media.mediaUrl;
+              allImagesContainer.appendChild(img);
+            })(media);
+          }
+        })
+        .catch(alertError);
+      }
+
+      function searchImage(payload) {
+        if(loading) {return;}
+        loading = true;
+        similarSearch.searchImage(payload)
+        .then((response) => {
+          loading = false;
+          console.log('searchImage', response);
+
+          while(similarImagesContainer.firstChild) {
+            similarImagesContainer.removeChild(similarImagesContainer.firstChild);
+          }
+          if(response.medias.length > 0) {
+            for(var media of response.medias) {
+              ((media) => {
+                var img = document.createElement('img');
+                img.addEventListener('click', function () {
+                  searchById(media);
+                });
+                img.classList.add('link','thumb');
+                img.src = media.mediaUrl;
+                similarImagesContainer.appendChild(img);
+              })(media);
+            }
+          } else {
+            alert('No similar results found');
+          }
+          window.scrollTo(0, document.body.scrollHeight);
+        })
+        .catch(alertError);
+      }
+
+      function searchByBase64(input) {
+        var file = input.files[0];
+
+        if (file) {
+          if (!file.type.match('image.*')) {
+              alert('File is not image');
+          } else {
+              var reader = new FileReader();
+              reader.onload = function (e) {
+                console.log('searchImage by base64');
+
+                inputImage.src = e.target.result;
+                searchImage({
+                  base64: e.target.result.split('base64,')[1]
+                });
+              };
+              reader.readAsDataURL(file);
+          }
+        }
+      }
+
+      function searchById(media) {
+        console.log('searchImage by mediaId');
+
+        inputImage.src = media.mediaUrl;
+        searchImage({
+          mediaId: media.mediaId
+        });
+      }
+
+      function searchByUrl() {
+        console.log('searchImage by mediaUrl');
+
+        inputImage.src = urlField.value;
+        searchImage({
+          mediaUrl: urlField.value
+        });
+      }
+
+      function alertError(error) {
+        loading = false;
+        alert(JSON.stringify(error));
+      }
+    </script>
+  </body>
+</html>
