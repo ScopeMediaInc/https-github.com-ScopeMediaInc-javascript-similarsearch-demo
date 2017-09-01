@@ -1,6 +1,6 @@
 ScopeMedia JavaScript Demo - Similar Image Search
 =====
-A demo HTML page implementing [ScopeMedia JavaScript SDK](https://github.com/ScopeMediaInc/javascript-sdk).
+A demo HTML page of doing similar image search with [ScopeMedia JavaScript SDK](https://github.com/ScopeMediaInc/javascript-sdk).
 
 Installation
 -----
